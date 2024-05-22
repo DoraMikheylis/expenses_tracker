@@ -31,7 +31,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   @override
   void initState() {
-    dateController.text = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    dateController.text = DateFormat('dd.MM.yyyy').format(DateTime.now());
     getListIcons(context).then((value) => categoriesIcons = value);
     expense = Expense.empty;
     expense.expenseId = const Uuid().v1();
