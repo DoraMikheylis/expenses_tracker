@@ -27,3 +27,9 @@ final class GetCategoriesSuccess extends CategoryState {
   @override
   List<Object> get props => [categories];
 }
+
+final class DeleteCategorySuccess extends CategoryState {}
+
+final class DeleteCategoryFailure extends CategoryState {}
+
+final class DeleteCategoryLoading extends CategoryState {}

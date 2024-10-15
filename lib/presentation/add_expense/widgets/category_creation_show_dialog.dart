@@ -1,212 +1,159 @@
 import 'package:expenses_tracker/business_logic/category_bloc/category_bloc.dart';
+import 'package:expenses_tracker/presentation/add_expense/widgets/color_show_dialog.dart';
 import 'package:expenses_tracker/presentation/add_expense/widgets/create_category.dart';
-import 'package:expenses_tracker/presentation/add_expense/widgets/save_button.dart';
+import 'package:expenses_tracker/presentation/add_expense/widgets/icon_show_dialog.dart';
+import 'package:expenses_tracker/presentation/widgets/save_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
-Future<void> categoryCreation(
-    BuildContext context, Map<String, String> categoriesIcons) async {
-  return await showDialog(
-    context: context,
-    builder: (ctx) {
-      bool isExpended = false;
-      String categoryIconSelected = '';
-      Color categoryColorSelected = Colors.white;
+class CategoryCreation extends StatefulWidget {
+  final Map<String, String> categoriesIcons;
+  final BuildContext context;
 
-      TextEditingController categoryNameController = TextEditingController();
+  const CategoryCreation(
+      {super.key, required this.categoriesIcons, required this.context});
 
-      return StatefulBuilder(
-        builder: (ctx, setState) {
-          return BlocConsumer<CategoryBloc, CategoryState>(
-              listener: (context, state) {
-                if (state is CreateCategorySuccess) {}
-                if (state is CreateCategoryFailure) {}
-              },
-              builder: (context, state) => AlertDialog(
-                    actions: [
-                      state is CreateCategoryLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : SaveButton(
-                              label: 'Save category',
-                              onPressed: () {
-                                createCategory(
-                                    context: context,
-                                    categoryName: categoryNameController.text,
-                                    categoryIcon: categoryIconSelected,
-                                    categoryColor: categoryColorSelected.value);
-                                context
-                                    .read<CategoryBloc>()
-                                    .add(const GetCategoriesEvent());
-                              }),
-                    ],
-                    title: const Text('Create a new category'),
-                    content: SizedBox(
-                      width: MediaQuery.of(context).size.width,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextFormField(
-                            controller: categoryNameController,
-                            onTap: () {},
-                            decoration: InputDecoration(
-                                isDense: true,
-                                filled: true,
-                                fillColor: Colors.white,
-                                hintText: 'Name',
-                                border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none)),
-                          ),
-                          const SizedBox(
-                            height: 16,
-                          ),
-                          TextFormField(
-                            onTap: () {
-                              setState(() {
-                                isExpended = !isExpended;
-                              });
-                            },
-                            readOnly: true,
-                            decoration: InputDecoration(
-                                suffixIcon:
-                                    const Icon(CupertinoIcons.chevron_down),
-                                isDense: true,
-                                filled: true,
-                                fillColor: Colors.white,
-                                hintText: 'Icon',
-                                border: OutlineInputBorder(
-                                    borderRadius: isExpended
-                                        ? const BorderRadius.vertical(
-                                            top: Radius.circular(12),
-                                          )
-                                        : BorderRadius.circular(12),
-                                    borderSide: BorderSide.none)),
-                          ),
-                          isExpended
-                              ? Container(
-                                  width: MediaQuery.of(context).size.width,
-                                  height: 200,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.vertical(
-                                      bottom: Radius.circular(12),
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: GridView.builder(
-                                        gridDelegate:
-                                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 3,
-                                          mainAxisSpacing: 5,
-                                          crossAxisSpacing: 5,
-                                        ),
-                                        itemCount: categoriesIcons.length,
-                                        itemBuilder: (context, int i) {
-                                          return GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                categoryIconSelected =
-                                                    categoriesIcons.keys
-                                                        .elementAt(i);
-                                              });
-                                            },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                  border: Border.all(
-                                                    width: 2,
-                                                    color:
-                                                        categoryIconSelected ==
-                                                                categoriesIcons
-                                                                    .keys
-                                                                    .elementAt(
-                                                                        i)
-                                                            ? Colors.green
-                                                            : Colors.grey,
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          12)),
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(20.0),
-                                                child: SvgPicture.asset(
-                                                  categoriesIcons.values
-                                                      .elementAt(i),
-                                                  colorFilter:
-                                                      categoryIconSelected ==
-                                                              categoriesIcons
-                                                                  .keys
-                                                                  .elementAt(i)
-                                                          ? const ColorFilter
-                                                              .mode(
-                                                              Colors.green,
-                                                              BlendMode.srcIn)
-                                                          : const ColorFilter
-                                                              .mode(Colors.grey,
-                                                              BlendMode.srcIn),
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        }),
-                                  ),
-                                )
-                              : Container(),
-                          const SizedBox(
-                            height: 16,
-                          ),
-                          TextFormField(
-                            readOnly: true,
-                            onTap: () {
-                              showDialog(
+  @override
+  State<CategoryCreation> createState() => _CategoryCreationState();
+}
+
+class _CategoryCreationState extends State<CategoryCreation> {
+  final _formKey = GlobalKey<FormState>();
+
+  bool isExpended = false;
+  String categoryIconSelected = '';
+  Color categoryColorSelected = Colors.white;
+  late Map<String, String> categoriesIcons;
+  late BuildContext ctx;
+
+  TextEditingController categoryNameController = TextEditingController();
+
+  @override
+  void initState() {
+    categoriesIcons = widget.categoriesIcons;
+    ctx = widget.context;
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider.value(
+      value: BlocProvider.of<CategoryBloc>(ctx),
+      child: BlocConsumer<CategoryBloc, CategoryState>(
+          listener: (context, state) {
+            if (state is CreateCategorySuccess) {
+              Navigator.of(context).pop();
+
+              context.read<CategoryBloc>().add(const GetCategoriesEvent());
+            }
+            if (state is CreateCategoryFailure) {}
+          },
+          builder: (context, state) => Form(
+                key: _formKey,
+                child: AlertDialog(
+                  actions: [
+                    SaveButton(
+                        label: 'Save category',
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            createCategory(
                                 context: context,
-                                builder: (ctx2) {
-                                  return AlertDialog(
-                                    actionsAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    actions: const [
-                                      SaveButton(
-                                        label: 'Save color',
-                                      ),
-                                    ],
-                                    content: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        ColorPicker(
-                                          pickerColor: categoryColorSelected,
-                                          onColorChanged: (color) {
-                                            setState(
-                                              () {
-                                                categoryColorSelected = color;
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  );
+                                categoryName: categoryNameController.text,
+                                categoryIcon: categoryIconSelected,
+                                categoryColor: categoryColorSelected.value);
+                          }
+                        }),
+                  ],
+                  title: const Text('Create a new category'),
+                  content: SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: categoryNameController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter a name of category';
+                            }
+                            return null;
+                          },
+                          onTap: () {},
+                          decoration: InputDecoration(
+                              isDense: true,
+                              filled: true,
+                              fillColor: Colors.white,
+                              hintText: 'Name',
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none)),
+                        ),
+                        const SizedBox(
+                          height: 16,
+                        ),
+                        TextFormField(
+                          validator: (value) {
+                            if (categoryIconSelected == '') {
+                              return 'Please select an icon';
+                            }
+                            return null;
+                          },
+                          onTap: () async {
+                            await iconShowDialog(
+                                context, categoriesIcons, categoryIconSelected,
+                                (icon) {
+                              setState(() {
+                                categoryIconSelected = icon;
+                              });
+                            });
+                          },
+                          readOnly: true,
+                          decoration: InputDecoration(
+                              suffixIcon:
+                                  const Icon(CupertinoIcons.chevron_down),
+                              isDense: true,
+                              filled: true,
+                              fillColor: Colors.white,
+                              hintText: 'Icon',
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none)),
+                        ),
+                        const SizedBox(
+                          height: 16,
+                        ),
+                        TextFormField(
+                          validator: (value) {
+                            if (categoryColorSelected == Colors.white) {
+                              return 'Please select a color';
+                            }
+                            return null;
+                          },
+                          readOnly: true,
+                          onTap: () async {
+                            await colorShowDialog(context, (color) {
+                              setState(
+                                () {
+                                  categoryColorSelected = color;
                                 },
                               );
-                            },
-                            decoration: InputDecoration(
-                                isDense: true,
-                                filled: true,
-                                fillColor: categoryColorSelected,
-                                hintText: 'Color',
-                                border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none)),
-                          ),
-                        ],
-                      ),
+                            }, categoryColorSelected);
+                          },
+                          decoration: InputDecoration(
+                              isDense: true,
+                              filled: true,
+                              fillColor: categoryColorSelected,
+                              hintText: 'Color',
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none)),
+                        ),
+                      ],
                     ),
-                  ));
-        },
-      );
-    },
-  );
+                  ),
+                ),
+              )),
+    );
+  }
 }

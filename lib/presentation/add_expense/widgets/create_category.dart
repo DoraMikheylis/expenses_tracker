@@ -10,7 +10,7 @@ createCategory({
   required String categoryIcon,
   required int categoryColor,
 }) {
-  Category category = Category.empty;
+  Category category = Category.createEmpty();
   category.categoryId = const Uuid().v1();
 
   category.name = categoryName;

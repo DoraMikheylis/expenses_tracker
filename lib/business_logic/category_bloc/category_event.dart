@@ -18,3 +18,8 @@ class CreateCategoryEvent extends CategoryEvent {
 class GetCategoriesEvent extends CategoryEvent {
   const GetCategoriesEvent();
 }
+
+class DeleteCategoryEvent extends CategoryEvent {
+  final Category category;
+  const DeleteCategoryEvent(this.category);
+}

@@ -15,4 +15,30 @@ class CreateExpenseEvent extends ExpenseEvent {
   List<Object> get props => [expense];
 }
 
-class GetExpensesEvent extends ExpenseEvent {}
+class GetExpensesEvent extends ExpenseEvent {
+  const GetExpensesEvent({
+    this.limit,
+  });
+
+  final int? limit;
+}
+
+class GetExpensesByCategoryEvent extends ExpenseEvent {
+  const GetExpensesByCategoryEvent({
+    required this.categoryId,
+    this.limit,
+  });
+
+  final String categoryId;
+
+  final int? limit;
+}
+
+class GetExpensesGroupedByCategoryEvent extends ExpenseEvent {
+  const GetExpensesGroupedByCategoryEvent();
+}
+
+class DeleteExpenseEvent extends ExpenseEvent {
+  final String expenseId;
+  const DeleteExpenseEvent({required this.expenseId});
+}

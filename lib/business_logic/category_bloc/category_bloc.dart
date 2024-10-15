@@ -22,10 +22,20 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     on<GetCategoriesEvent>((event, emit) async {
       emit(GetCategoriesLoading());
       try {
-        List<Category> categories = await expenseRepository.getCategory();
+        List<Category> categories = await expenseRepository.getCategories();
         emit(GetCategoriesSuccess(categories: categories));
       } catch (e) {
         emit(GetCategoriesFailure());
+      }
+    });
+
+    on<DeleteCategoryEvent>((event, emit) async {
+      emit(DeleteCategoryLoading());
+      try {
+        await expenseRepository.deleteCategory(event.category);
+        emit(DeleteCategorySuccess());
+      } catch (e) {
+        emit(DeleteCategoryFailure());
       }
     });
   }

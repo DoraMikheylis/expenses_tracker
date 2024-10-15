@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -20,7 +19,5 @@ Future<Map<String, String>> getListIcons(BuildContext context) async {
         return toBeginningOfSentenceCase(match);
       },
       value: (e) => e);
-
-  log(iconNames.toString());
   return iconNames;
 }
