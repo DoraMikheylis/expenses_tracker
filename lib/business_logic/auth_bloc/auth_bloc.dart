@@ -7,53 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final authService = AuthService();
   AuthBloc() : super(const AuthStateUninitialized()) {
-    //forgot password
-    // on<AuthEventForgotPassword>((event, emit) async {
-    //   emit(const AuthStateForgotPassword(
-    //     exception: null,
-    //     hasSentEmail: false,
-    //     isLoading: false,
-    //   ));
-    //   final email = event.email;
-    //   if (email == null) {
-    //     return;
-    //   }
-
-    //   await authService.sendPasswordReset(toEmail: email);
-    //   emit(const AuthStateForgotPassword(
-    //     exception: null,
-    //     hasSentEmail: false,
-    //     isLoading: true,
-    //   ));
-
-    //   bool didSendEmail;
-    //   Exception? exception;
-    //   try {
-    //     await authService.sendPasswordReset(toEmail: email);
-    //     didSendEmail = true;
-    //     exception = null;
-    //   } on Exception catch (e) {
-    //     didSendEmail = false;
-    //     exception = e;
-    //   }
-
-    //   emit(AuthStateForgotPassword(
-    //     exception: exception,
-    //     hasSentEmail: didSendEmail,
-    //     isLoading: false,
-    //   ));
-    // });
-
-    // //send email verification (вызывает баги)
-    // on<AuthEventSendEmailVerification>((event, emit) async {
-    //   try {
-    //     await provider.sendEmailVerification();
-    //     emit(const AuthStateNeedsVerification(isLoading: false));
-    //   } on Exception catch (e) {
-    //     log(e.toString());
-    //   }
-    // });
-
     //register
     on<AuthEventRegister>((event, emit) async {
       emit(AuthStateLoading());

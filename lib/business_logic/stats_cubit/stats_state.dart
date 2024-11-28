@@ -4,7 +4,7 @@ import 'package:expenses_tracker/data/models/models.dart';
 enum StatsStatus { initial, loading, success, failure }
 
 class StatsState extends Equatable {
-  final List<Map<Category, List<Expense>>> listMonthlyExpenses;
+  final List<Map<String, List<Expense>>> listMonthlyExpenses;
   final StatsStatus status;
   final int pageIndex;
   final Category? selectedCategory;
@@ -21,7 +21,7 @@ class StatsState extends Equatable {
 
   StatsState copyWith(
       {StatsStatus? status,
-      List<Map<Category, List<Expense>>>? listMonthlyExpenses,
+      List<Map<String, List<Expense>>>? listMonthlyExpenses,
       int? pageIndex,
       Category? selectedCategory}) {
     return StatsState(

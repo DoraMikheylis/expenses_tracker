@@ -1,6 +1,7 @@
 import 'package:expenses_tracker/business_logic/auth_bloc/auth_bloc.dart';
 import 'package:expenses_tracker/business_logic/auth_bloc/auth_event.dart';
 import 'package:expenses_tracker/business_logic/category_bloc/category_bloc.dart';
+import 'package:expenses_tracker/business_logic/currency_cubit/currency_cubit.dart';
 import 'package:expenses_tracker/business_logic/expense_bloc/expense_bloc.dart';
 import 'package:expenses_tracker/business_logic/income_cubit/income_cubit.dart';
 import 'package:expenses_tracker/business_logic/stats_cubit/stats_cubit.dart';
@@ -26,22 +27,27 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
+    final FirebaseExpenseRepo expenseRepo = FirebaseExpenseRepo();
+
     return MultiBlocProvider(
       providers: [
         BlocProvider<ExpenseBloc>(
-          create: (context) => ExpenseBloc(FirebaseExpenseRepo())
+          create: (context) => ExpenseBloc(expenseRepo)
             ..add(
               const GetExpensesEvent(),
             ),
         ),
         BlocProvider<IncomeCubit>(
-          create: (context) => IncomeCubit(FirebaseExpenseRepo())..getIncomes(),
+          create: (context) => IncomeCubit(expenseRepo)..getIncomes(),
         ),
         BlocProvider<AuthBloc>(
           create: (context) => AuthBloc()..add(const AuthEventInitialize()),
         ),
         BlocProvider<StatsCubit>(
-          create: (context) => StatsCubit(FirebaseExpenseRepo()),
+          create: (context) => StatsCubit(expenseRepo),
+        ),
+        BlocProvider(
+          create: (context) => CurrencyCubit(expenseRepo),
         ),
       ],
       child: MaterialApp(
@@ -53,10 +59,8 @@ class _AppState extends State<App> {
             surface: Colors.grey.shade100,
             onSurface: Colors.black,
             surfaceBright: Colors.white,
-            // primary: Colors.white,
             onPrimary: const Color(0xFF2B405B),
             onSecondary: const Color(0xFF456690),
-            // secondary: const Color(0xFFE064F7),
             tertiary: const Color(0xFFFF8D6C),
             onTertiary: const Color(0xFF00B2E7),
             tertiaryContainer: const Color(0xFFE064F7),
@@ -73,8 +77,15 @@ class _AppState extends State<App> {
                 child: const LoginScreen(),
               ),
           registerRoute: (context) => const RegistationScreen(),
-          homeRoute: (context) => BlocProvider<StatsCubit>.value(
-                value: context.read<StatsCubit>(),
+          homeRoute: (context) => MultiBlocProvider(
+                providers: [
+                  BlocProvider<StatsCubit>.value(
+                    value: context.read<StatsCubit>(),
+                  ),
+                  BlocProvider<CurrencyCubit>.value(
+                    value: context.read<CurrencyCubit>(),
+                  ),
+                ],
                 child: const NavBarMainScreen(),
               ),
           expensesByCategoryRoute: (context) => BlocProvider<StatsCubit>.value(
@@ -87,7 +98,7 @@ class _AppState extends State<App> {
                     value: context.read<StatsCubit>(),
                   ),
                   BlocProvider<CategoryBloc>(
-                    create: (context) => CategoryBloc(FirebaseExpenseRepo())
+                    create: (context) => CategoryBloc(expenseRepo)
                       ..add(const GetCategoriesEvent()),
                   ),
                   BlocProvider<ExpenseBloc>.value(

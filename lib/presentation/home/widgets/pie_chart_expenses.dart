@@ -4,12 +4,11 @@ import 'package:expenses_tracker/presentation/home/utilities/darken_color.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../data/models/models.dart';
 
 class PieChartExpenseCategory extends StatefulWidget {
-  final Map<Category, List<Expense>> expensesMap;
+  final Map<String, List<Expense>> expensesMap;
 
   const PieChartExpenseCategory({
     super.key,
@@ -69,63 +68,34 @@ class PieChartExpenseCategoryState extends State<PieChartExpenseCategory> {
   }
 }
 
-class _Badge extends StatelessWidget {
-  const _Badge(
-    this.svgAsset, {
-    required this.size,
-    required this.borderColor,
-  });
-  final String svgAsset;
-  final double size;
-  final Color borderColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: PieChart.defaultDuration,
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: borderColor,
-          width: 2,
-        ),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withOpacity(.5),
-            offset: const Offset(3, 3),
-            blurRadius: 3,
-          ),
-        ],
-      ),
-      padding: EdgeInsets.all(size * .15),
-      child: Center(
-        child: SvgPicture.asset(
-          svgAsset,
-        ),
-      ),
-    );
-  }
-}
-
 List<PieChartSectionData> showingSections(
-    Map<Category, List<Expense>> expensesMap, int touchedIndex) {
+    Map<String, List<Expense>> expensesMap, int touchedIndex) {
   double totalExpenses = expensesMap.values
       .expand((expenses) => expenses)
       .fold(0.0, (sum, expense) => sum + expense.amount);
 
   return List.generate(expensesMap.keys.length, (i) {
-    final category = expensesMap.keys.toList()[i];
-    final amount = expensesMap[category]!
+    final expense = expensesMap.values.toList()[i].firstOrNull;
+
+    if (expense == null) {
+      return PieChartSectionData(
+        color: Colors.transparent,
+        value: 0,
+        title: '',
+        radius: 0,
+        titleStyle: const TextStyle(color: Colors.transparent),
+      );
+    }
+
+    final category = expense.category;
+
+    final amount = expensesMap[category.categoryId]!
         .fold(0.0, (previousValue, element) => previousValue + element.amount);
     final percentage = (amount / totalExpenses) * 100;
 
     final isTouched = i == touchedIndex;
     final fontSize = isTouched ? 20.0 : 16.0;
     final radius = isTouched ? 110.0 : 100.0;
-    // final widgetSize = isTouched ? 55.0 : 40.0;
     const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
 
     return PieChartSectionData(

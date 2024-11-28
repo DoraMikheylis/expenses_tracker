@@ -17,7 +17,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   late final TextEditingController emailController;
   late final TextEditingController passwordController;
-  // final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void initState() {
@@ -60,14 +59,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   enableSuggestions: false,
                   autocorrect: false,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(hintText: 'Email'),
+                  decoration: InputDecoration(
+                      hintText: 'Email',
+                      errorText: _validateEmail(emailController.text)),
+                  onChanged: (value) => setState(() {}),
                 ),
                 TextField(
                   controller: passwordController,
                   obscureText: true,
                   enableSuggestions: false,
                   autocorrect: false,
-                  decoration: const InputDecoration(hintText: 'Password'),
+                  decoration: const InputDecoration(
+                    hintText: 'Password',
+                  ),
                 ),
                 TextButton(
                   onPressed: () async {
@@ -124,4 +128,15 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+}
+
+String? _validateEmail(String? value) {
+  if (value == null || value.isEmpty) {
+    return 'Please enter your email';
+  }
+  final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+  if (!regex.hasMatch(value)) {
+    return 'Enter a valid email';
+  }
+  return null;
 }

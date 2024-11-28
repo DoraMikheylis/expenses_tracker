@@ -1,6 +1,8 @@
 import 'package:expenses_tracker/business_logic/auth_bloc/auth_bloc.dart';
 import 'package:expenses_tracker/business_logic/auth_bloc/auth_event.dart';
 import 'package:expenses_tracker/business_logic/auth_bloc/auth_state.dart';
+import 'package:expenses_tracker/business_logic/currency_cubit/currency_cubit.dart';
+import 'package:expenses_tracker/business_logic/currency_cubit/currency_state.dart';
 import 'package:expenses_tracker/business_logic/expense_bloc/expense_bloc.dart';
 import 'package:expenses_tracker/constants/routes.dart';
 import 'package:expenses_tracker/presentation/auth/show_error_dialog.dart';
@@ -13,6 +15,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
@@ -127,18 +130,81 @@ class HomeScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  IconButton.filled(
-                    style: ButtonStyle(
-                        shape: WidgetStatePropertyAll(RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        )),
-                        backgroundColor: WidgetStatePropertyAll(
-                            Theme.of(context).colorScheme.surfaceBright)),
-                    color: Theme.of(context).colorScheme.outline,
-                    onPressed: () {},
-                    icon: const Icon(
-                      CupertinoIcons.settings,
-                    ),
+                  BlocBuilder<CurrencyCubit, CurrencyState>(
+                    builder: (context, state) {
+                      if (state.status == CurrencyStatus.success) {
+                        if (state.rates.isNotEmpty) {
+                          return MenuAnchor(
+                              alignmentOffset: const Offset(-50, 0),
+                              style: MenuStyle(
+                                backgroundColor: WidgetStateProperty.all(
+                                    Theme.of(context).colorScheme.surface),
+                              ),
+                              menuChildren: state.rates.map((rate) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(right: 10.0),
+                                        child: Text(
+                                          rate.currency.toString(),
+                                          style: TextStyle(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onPrimary,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        rate.value!.toStringAsFixed(3),
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onPrimary,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                              builder: (BuildContext context,
+                                  MenuController controller, Widget? child) {
+                                return IconButton.filled(
+                                  style: ButtonStyle(
+                                      shape: WidgetStatePropertyAll(
+                                          RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10.0),
+                                      )),
+                                      backgroundColor: WidgetStatePropertyAll(
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .surfaceBright)),
+                                  color: Theme.of(context).colorScheme.outline,
+                                  onPressed: () {
+                                    if (controller.isOpen) {
+                                      controller.close();
+                                    } else {
+                                      controller.open();
+                                    }
+                                  },
+                                  icon: const Icon(
+                                    FontAwesomeIcons.lariSign,
+                                  ),
+                                );
+                              });
+                        }
+                      }
+
+                      return const CircularProgressIndicator();
+                    },
                   ),
                 ],
               ),

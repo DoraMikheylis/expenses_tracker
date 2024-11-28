@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'expense_repository.dart';
@@ -18,285 +16,189 @@ class FirebaseExpenseRepo implements ExpenseRepository {
         .collection(type.name);
   }
 
-  String? getCurrentUserId() {
-    final user = _auth.currentUser;
-    return user?.uid;
+  String? _getUid() {
+    return _auth.currentUser?.uid;
   }
 
   @override
   Future<void> createCategory(Category category) async {
-    final uid = getCurrentUserId();
+    final uid = _getUid();
     if (uid != null) {
-      CategoryDocument categoryDocument =
-          CategoryDocument.fromCategory(category);
-      try {
-        await _collection(uid, CollectionTypes.categories)
-            .doc(categoryDocument.categoryId)
-            .set(categoryDocument.toDocument());
-      } catch (e) {
-        log(e.toString());
-        rethrow;
-      }
+      final categoryDoc = CategoryDocument.fromCategory(category);
+      await _collection(uid, CollectionTypes.categories)
+          .doc(categoryDoc.categoryId)
+          .set(categoryDoc.toDocument());
     }
   }
 
   @override
   Future<List<Category>> getCategories() async {
-    final uid = getCurrentUserId();
-    if (uid != null) {
-      try {
-        return await _collection(uid, CollectionTypes.categories).get().then(
-            (value) => value.docs
-                .map(
-                    (e) => CategoryDocument.fromDocument(e.data()).toCategory())
-                .toList());
-      } catch (e) {
-        log(e.toString());
-        rethrow;
-      }
+    final uid = _getUid();
+    if (uid == null) {
+      return [];
     }
-    return [];
+
+    final snapshot = await _collection(uid, CollectionTypes.categories).get();
+    return snapshot.docs
+        .map((e) => CategoryDocument.fromDocument(e.data()).toCategory())
+        .toList();
+  }
+
+  @override
+  Future<Category> getCategoryById(String categoryId) async {
+    final uid = _getUid();
+    if (uid == null) {
+      return Category.createEmpty();
+    }
+
+    final document = await _collection(uid, CollectionTypes.categories)
+        .doc(categoryId)
+        .get();
+
+    if (document.exists && document.data() != null) {
+      return CategoryDocument.fromDocument(document.data()!).toCategory();
+    }
+
+    return Category.createEmpty();
   }
 
   @override
   Future<void> deleteCategory(Category category) async {
-    final uid = getCurrentUserId();
+    final uid = _getUid();
     if (uid != null) {
       CategoryDocument categoryDocument =
           CategoryDocument.fromCategory(category);
-      try {
-        await _collection(uid, CollectionTypes.categories)
-            .doc(categoryDocument.categoryId)
-            .delete();
-      } catch (e) {
-        log(e.toString());
-        rethrow;
-      }
+
+      await _collection(uid, CollectionTypes.categories)
+          .doc(categoryDocument.categoryId)
+          .delete();
     }
   }
 
   @override
   Future<void> createExpense(Expense expense) async {
-    final uid = getCurrentUserId();
+    final uid = _getUid();
     if (uid != null) {
-      ExpenseDocument expenseDocument = ExpenseDocument.fromExpense(expense);
-      try {
-        await _collection(uid, CollectionTypes.expenses)
-            .doc(expenseDocument.expenseId)
-            .set(expenseDocument.toDocument());
-      } catch (e) {
-        log(e.toString());
-        rethrow;
-      }
+      final expenseDoc = ExpenseDocument.fromExpense(expense);
+      await _collection(uid, CollectionTypes.expenses)
+          .doc(expenseDoc.expenseId)
+          .set(expenseDoc.toDocument());
     }
   }
 
   @override
   Future<List<Expense>> getExpenses({int? limit}) async {
-    final uid = getCurrentUserId();
-    if (uid != null) {
-      try {
-        Query<Map<String, dynamic>> query =
-            _collection(uid, CollectionTypes.expenses);
-        if (limit != null) {
-          query = query.limit(limit);
-        }
-        return await query.orderBy('date', descending: true).get().then(
-            (value) => value.docs
-                .map((e) => ExpenseDocument.fromDocument(e.data()).toExpense())
-                .toList());
-      } catch (e) {
-        log(e.toString());
-        rethrow;
-      }
+    final uid = _getUid();
+    if (uid == null) {
+      return [];
     }
-    return [];
+
+    Query<Map<String, dynamic>> query =
+        _collection(uid, CollectionTypes.expenses);
+    if (limit != null) query = query.limit(limit);
+
+    final snapshot = await query.orderBy('date', descending: true).get();
+    return snapshot.docs
+        .map((e) => ExpenseDocument.fromDocument(e.data()).toExpense())
+        .toList();
   }
 
   @override
   Future<void> deleteExpense(String expenseId) async {
-    final uid = getCurrentUserId();
+    final uid = _getUid();
     if (uid != null) {
-      try {
-        await _collection(uid, CollectionTypes.expenses)
-            .doc(expenseId)
-            .delete();
-      } catch (e) {
-        log(e.toString());
-        rethrow;
-      }
+      await _collection(uid, CollectionTypes.expenses).doc(expenseId).delete();
     }
   }
 
   @override
   Future<List<Expense>> getExpensesByCategory(String categoryId,
       {int? limit}) async {
-    final uid = getCurrentUserId();
-    if (uid != null) {
-      try {
-        Query<Map<String, dynamic>> query =
-            _collection(uid, CollectionTypes.expenses);
-        if (limit != null) {
-          query = query.limit(limit);
-        }
-        return await query
-            .where('categoryId', isEqualTo: categoryId)
-            .orderBy('date', descending: true)
-            .get()
-            .then((value) => value.docs
-                .map((e) => ExpenseDocument.fromDocument(e.data()).toExpense())
-                .toList());
-      } catch (e) {
-        log(e.toString());
-        rethrow;
-      }
-    }
-    return [];
-  }
+    final uid = _getUid();
+    if (uid == null) return [];
 
-  @override
-  Future<Map<Category, List<Expense>>> getExpensesGroupedByCategory(
-      {DateTime? date}) async {
-    final uid = getCurrentUserId();
-    if (uid == null) return {};
+    Query<Map<String, dynamic>> query =
+        _collection(uid, CollectionTypes.expenses);
 
-    try {
-      final categories = await getCategories();
-      final allExpenses = await _getExpensesFromFirestore(uid, date);
-
-      final groupedExpenses = _groupExpensesByCategory(allExpenses, categories);
-
-      return _sortCategoriesByExpenseSum(groupedExpenses);
-    } catch (e) {
-      log(e.toString());
-      rethrow;
-    }
-  }
-
-  Future<List<Expense>> _getExpensesFromFirestore(
-      String uid, DateTime? date) async {
-    QuerySnapshot<Map<String, dynamic>> querySnapshot;
-
-    if (date != null) {
-      DateTime startOfMonth = DateTime(date.year, date.month, 1);
-      DateTime endOfMonth = DateTime(date.year, date.month + 1, 0);
-
-      querySnapshot = await _collection(uid, CollectionTypes.expenses)
-          .where('date', isGreaterThanOrEqualTo: startOfMonth)
-          .where('date', isLessThanOrEqualTo: endOfMonth)
-          .orderBy('date', descending: true)
-          .get();
-    } else {
-      querySnapshot = await _collection(uid, CollectionTypes.expenses).get();
+    if (limit != null) {
+      query = query.limit(limit);
     }
 
-    return querySnapshot.docs
+    final snapshot = await query
+        .where('categoryId', isEqualTo: categoryId)
+        .orderBy('date', descending: true)
+        .get();
+
+    return snapshot.docs
         .map((doc) => ExpenseDocument.fromDocument(doc.data()).toExpense())
         .toList();
   }
 
-  Map<Category, List<Expense>> _groupExpensesByCategory(
+  @override
+  Future<Map<String, List<Expense>>> getExpensesGroupedByCategory(
+      {DateTime? date}) async {
+    final uid = _getUid();
+    if (uid == null) return {};
+
+    final categories = await getCategories();
+    final expenses = await _getExpensesByDate(uid, date);
+
+    return _groupExpensesByCategory(expenses, categories);
+  }
+
+  Future<List<Expense>> _getExpensesByDate(String uid, DateTime? date) async {
+    Query<Map<String, dynamic>> query =
+        _collection(uid, CollectionTypes.expenses);
+
+    if (date != null) {
+      DateTime startOfMonth = DateTime(date.year, date.month, 1);
+      DateTime endOfMonth = DateTime(date.year, date.month + 1, 0);
+      query = query
+          .where('date', isGreaterThanOrEqualTo: startOfMonth)
+          .where('date', isLessThanOrEqualTo: endOfMonth)
+          .orderBy('date', descending: true);
+    }
+
+    final snapshot = await query.get();
+    return snapshot.docs
+        .map((doc) => ExpenseDocument.fromDocument(doc.data()).toExpense())
+        .toList();
+  }
+
+  Map<String, List<Expense>> _groupExpensesByCategory(
       List<Expense> allExpenses, List<Category> categories) {
-    Map<Category, List<Expense>> groupedExpenses = {};
+    Map<String, List<Expense>> groupedExpenses = {};
 
     for (var category in categories) {
       final categoryExpenses = allExpenses
           .where(
               (expense) => expense.category.categoryId == category.categoryId)
           .toList();
-      groupedExpenses[category] = categoryExpenses;
+      groupedExpenses[category.categoryId] = categoryExpenses;
     }
 
     return groupedExpenses;
   }
 
-  Map<Category, List<Expense>> _sortCategoriesByExpenseSum(
-      Map<Category, List<Expense>> groupedExpenses) {
-    var sortedEntries = groupedExpenses.entries.toList()
-      ..sort((a, b) {
-        double sumA = _calculateTotalExpense(a.value);
-        double sumB = _calculateTotalExpense(b.value);
-        return sumB.compareTo(sumA);
-      });
-
-    return {for (var entry in sortedEntries) entry.key: entry.value};
-  }
-
-  double _calculateTotalExpense(List<Expense> expenses) {
-    return expenses.fold(0.0, (amount, expense) => amount + expense.amount);
-  }
-
-  // @override
-  // Future<Map<Category, List<Expense>>> getExpensesGroupedByCategory(
-  //     {DateTime? date}) async {
-  //   final uid = getCurrentUserId();
-  //   if (uid != null) {
-  //     try {
-  //       final categories = await getCategories();
-  //       Map<Category, List<Expense>> groupedExpenses = {};
-  //       late final QuerySnapshot<Map<String, dynamic>> querySnapshot;
-
-  //       if (date != null) {
-  //         DateTime startOfMonth = DateTime(date.year, date.month, 1);
-  //         DateTime endOfMonth = DateTime(date.year, date.month + 1, 0);
-
-  //         querySnapshot = await expenseCollection(uid)
-  //             .where('date', isGreaterThanOrEqualTo: startOfMonth)
-  //             .where('date', isLessThanOrEqualTo: endOfMonth)
-  //             .get();
-  //       } else {
-  //         querySnapshot = await expenseCollection(uid).get();
-  //       }
-  //       final allExpenses = querySnapshot.docs
-  //           .map((doc) => ExpenseDocument.fromDocument(doc.data()).toExpense())
-  //           .toList();
-
-  //       for (var category in categories) {
-  //         final categoryExpenses = allExpenses
-  //             .where((expense) =>
-  //                 expense.category.categoryId == category.categoryId)
-  //             .toList();
-  //         groupedExpenses[category] = categoryExpenses;
-  //       }
-
-  //       return groupedExpenses;
-  //     } catch (e) {
-  //       log(e.toString());
-  //       rethrow;
-  //     }
-  //   }
-  //   return {};
-  // }
-
   @override
   Future<void> createIncome(Income income) async {
-    final uid = getCurrentUserId();
+    final uid = _getUid();
     if (uid != null) {
       IncomeDocument incomeDocument = IncomeDocument.fromIncome(income);
-      try {
-        await _collection(uid, CollectionTypes.incomes)
-            .doc(incomeDocument.incomeId)
-            .set(incomeDocument.toDocument());
-      } catch (e) {
-        log(e.toString());
-        rethrow;
-      }
+      await _collection(uid, CollectionTypes.incomes)
+          .doc(incomeDocument.incomeId)
+          .set(incomeDocument.toDocument());
     }
   }
 
   @override
   Future<List<Income>> getIncomes() async {
-    final uid = getCurrentUserId();
+    final uid = _getUid();
     if (uid != null) {
-      try {
-        return await _collection(uid, CollectionTypes.incomes).get().then(
-            (value) => value.docs
-                .map((e) => IncomeDocument.fromDocument(e.data()).toIncome())
-                .toList());
-      } catch (e) {
-        log(e.toString());
-        rethrow;
-      }
+      return _collection(uid, CollectionTypes.incomes).get().then((value) =>
+          value.docs
+              .map((e) => IncomeDocument.fromDocument(e.data()).toIncome())
+              .toList());
     }
     return [];
   }

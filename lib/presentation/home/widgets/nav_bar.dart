@@ -1,3 +1,4 @@
+import 'package:expenses_tracker/business_logic/currency_cubit/currency_cubit.dart';
 import 'package:expenses_tracker/business_logic/expense_bloc/expense_bloc.dart';
 import 'package:expenses_tracker/business_logic/income_cubit/income_cubit.dart';
 import 'package:expenses_tracker/constants/routes.dart';
@@ -29,6 +30,7 @@ class _NavBarMainScreenState extends State<NavBarMainScreen> {
   void initState() {
     context.read<ExpenseBloc>().add(const GetExpensesEvent());
     context.read<IncomeCubit>().getIncomes();
+    context.read<CurrencyCubit>().getRates(currencies: 'USD,EUR,RUB');
     super.initState();
   }
 

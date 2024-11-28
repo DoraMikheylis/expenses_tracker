@@ -1,7 +1,6 @@
 import 'package:expenses_tracker/business_logic/stats_cubit/stats_cubit.dart';
 import 'package:expenses_tracker/business_logic/stats_cubit/stats_state.dart';
 import 'package:expenses_tracker/constants/routes.dart';
-import 'package:expenses_tracker/data/repositories/expense_repository.dart';
 import 'package:expenses_tracker/presentation/home/widgets/stats/widgets/transaction_item.dart';
 import 'package:expenses_tracker/presentation/home/widgets/stats/widgets/transaction_list.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +11,7 @@ BlocBuilder<StatsCubit, StatsState> categoriesStats(
 ) {
   return BlocBuilder<StatsCubit, StatsState>(builder: (context, state) {
     if (state.status == StatsStatus.success) {
-      List<Expense> expenses = [];
+      List<TransactionItem> items = [];
 
       if (state.listMonthlyExpenses[state.pageIndex].values
           .every((expenses) => expenses.isEmpty)) {
@@ -21,26 +20,28 @@ BlocBuilder<StatsCubit, StatsState> categoriesStats(
         var categoriesMap = state.listMonthlyExpenses[state.pageIndex];
 
         categoriesMap.forEach((key, value) {
+          var expense = value.firstOrNull;
+
+          if (expense == null) {
+            return;
+          }
+
+          var category = expense.category;
+
           var amount = value.fold(
               0.0, (previousValue, element) => previousValue + element.amount);
-          expenses.add(Expense(
+          items.add(TransactionItem(
+              itemId: category.categoryId,
               amount: amount,
-              category: key,
-              expenseId: '',
-              date: DateTime.now()));
+              name: category.name,
+              icon: category.icon,
+              color: category.color));
         });
       }
       return TransactionList(
-          transactions: expenses
-              .map((e) => expenseToTransactionItemWithCategory(e))
-              .toList(),
+          transactions: items,
           onItemSelected: (itemId) {
-            var selectedCategory = state
-                .listMonthlyExpenses[state.pageIndex].keys
-                .where((element) => element.categoryId == itemId)
-                .firstOrNull;
-            if (selectedCategory == null) return;
-            context.read<StatsCubit>().setSelectedCategory(selectedCategory);
+            context.read<StatsCubit>().setSelectedCategory(itemId);
             Navigator.of(context).pushNamed(expensesByCategoryRoute);
           });
     } else {

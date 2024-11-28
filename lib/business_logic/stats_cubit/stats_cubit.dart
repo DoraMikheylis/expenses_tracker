@@ -13,7 +13,7 @@ class StatsCubit extends Cubit<StatsState> {
 
   Future<void> getExpensesGroupedByCategory({DateTime? date}) async {
     try {
-      Map<Category, List<Expense>> expenses =
+      Map<String, List<Expense>> expenses =
           await expenseRepository.getExpensesGroupedByCategory(date: date);
       emit(state.copyWith(
           status: StatsStatus.success,
@@ -27,7 +27,7 @@ class StatsCubit extends Cubit<StatsState> {
       {required DateTime date}) async {
     emit(state.copyWith(status: StatsStatus.loading));
     try {
-      List<Map<Category, List<Expense>>> expenses = [];
+      List<Map<String, List<Expense>>> expenses = [];
       for (int i = 0; i < 3; i++) {
         expenses.add(await expenseRepository.getExpensesGroupedByCategory(
             date: subtractMonth(date: date, months: i)));
@@ -43,7 +43,8 @@ class StatsCubit extends Cubit<StatsState> {
     emit(state.copyWith(pageIndex: index));
   }
 
-  void setSelectedCategory(Category category) {
+  void setSelectedCategory(String categoryId) async {
+    var category = await expenseRepository.getCategoryById(categoryId);
     emit(state.copyWith(selectedCategory: category));
   }
 

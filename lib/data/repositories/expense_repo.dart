@@ -15,6 +15,8 @@ abstract class ExpenseRepository {
   Future<void> deleteCategory(Category category);
 
   Future<List<Expense>> getExpensesByCategory(String categoryId, {int? limit});
-  Future<Map<Category, List<Expense>>> getExpensesGroupedByCategory(
+  Future<Map<String, List<Expense>>> getExpensesGroupedByCategory(
       {DateTime? date});
+
+  Future<Category> getCategoryById(String categoryId);
 }
